@@ -47,8 +47,8 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 
 typedef struct __attribute__((packed)) {
     uint8_t report_id;
-    int8_t  x_axis;
-    int8_t  y_axis;
+    uint8_t  x_axis;
+    uint8_t  y_axis;
     uint16_t buttons;
 } JoystickReport;
 
@@ -60,6 +60,8 @@ JoystickReport joystick2;
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 /* USER CODE BEGIN PFP */
+void updateJ1();
+void updateJ2();
 
 /* USER CODE END PFP */
 
@@ -101,6 +103,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
   joystick1.report_id = 1U;
   joystick2.report_id = 2U;
+
+  //USBD_HID_MOUSE_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick1, sizeof(joystick1));
+  //USBD_HID_JOYSTICK_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick2, sizeof(joystick2));
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -108,23 +113,15 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  joystick1.buttons = 0x100;
-	  joystick2.buttons = 0x02;
-	  USBD_HID_MOUSE_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick1, sizeof(joystick1));
-	  USBD_HID_JOYSTICK_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick2, sizeof(joystick2));
-	  HAL_Delay(200);
 
-	  USBD_HID_MOUSE_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick1, sizeof(joystick1));
-	  USBD_HID_JOYSTICK_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick2, sizeof(joystick2));
-	  HAL_Delay(200);
-
-	  joystick1.buttons = 0x00;
-	  joystick2.buttons = 0x00;
-	  USBD_HID_MOUSE_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick1, sizeof(joystick1));
-	  USBD_HID_JOYSTICK_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick2, sizeof(joystick2));
-
-	  HAL_Delay(2000);
     /* USER CODE BEGIN 3 */
+	updateJ1();
+	updateJ2();
+	USBD_HID_MOUSE_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick1, sizeof(joystick1));
+
+	USBD_HID_JOYSTICK_SendReport(&hUsbDeviceFS, (uint8_t *)&joystick2, sizeof(joystick2));
+
+	HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }
@@ -182,18 +179,152 @@ void SystemClock_Config(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
+
+
+  /*Configure GPIO pins : PA0 PA1 PA2 PA3
+                           PA4 PA5 PA6 PA7
+                           PA8 PA9 PA10 PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
+                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB0 PB1 PB10 PB11
+                           PB12 PB13 PB14 PB15
+                           PB3 PB4 PB5 PB6
+                           PB7 PB8 PB9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
+                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
+                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
+void updateJ1() {
+	joystick1.buttons = 0;
+	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_13) == GPIO_PIN_RESET) {
+		joystick1.buttons |= 1;
+	}
+	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_14) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 1);
+	}
+	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_15) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 2);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 3);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_1) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 4);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_2) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 5);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_3) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 6);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 7);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 8);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 9);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_7) == GPIO_PIN_RESET) {
+		joystick1.buttons |= (1 << 10);
+	}
+
+	joystick1.x_axis = 128;
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == GPIO_PIN_RESET) {
+		joystick1.x_axis = 255;
+	} else if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET) {
+		joystick1.x_axis = 0;
+	}
+
+	joystick1.y_axis = 128;
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_10) == GPIO_PIN_RESET) {
+		joystick1.y_axis = 255;
+	} else if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_11) == GPIO_PIN_RESET) {
+		joystick1.y_axis = 0;
+	}
+
+}
+
+void updateJ2() {
+	joystick2.buttons = 0;
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_9) == GPIO_PIN_RESET) {
+		joystick2.buttons |= 1;
+	}
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_8) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 1);
+	}
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_7) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 2);
+	}
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_6) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 3);
+	}
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_5) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 4);
+	}
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_4) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 5);
+	}
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_3) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 6);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_15) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 7);
+	}  //WHY???
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_10) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 8);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 9);
+	}
+	if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_8) == GPIO_PIN_RESET) {
+		joystick2.buttons |= (1 << 10);
+	}
+
+	joystick2.x_axis = 128;
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_15) == GPIO_PIN_RESET) {
+		joystick2.x_axis = 255;
+	} else if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_14) == GPIO_PIN_RESET) {
+		joystick2.x_axis = 0;
+	}
+
+	joystick2.y_axis = 128;
+	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_13) == GPIO_PIN_RESET) {
+		joystick2.y_axis = 255;
+	} else if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_12) == GPIO_PIN_RESET	) {
+		joystick2.y_axis = 0;
+	}
+}
 
 /* USER CODE END 4 */
 
